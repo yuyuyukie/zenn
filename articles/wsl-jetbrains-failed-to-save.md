@@ -5,7 +5,7 @@ type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["wsl2", "linux", "jetbrains", "ide"]
 published: true
 ---
-# 症状e
+# 症状
 WSL2環境でWebStorm(PhpStormなど他Jetbrains製IDEでしたら同じ症状が起きます)で発生。
 GitHubからcloneしたプロジェクトで作業をしようとしたところ、セーブしようとすると
 ```
