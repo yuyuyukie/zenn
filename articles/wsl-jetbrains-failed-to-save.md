@@ -1,5 +1,5 @@
 ---
-title: "WSL2・JetbrainsIDE環境で「Failed to save settings. Please restart WebStorm」でハマった話"
+title: "JetbrainsIDE環境で「Failed to save settings」に対処する"
 emoji: "💻"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["wsl2", "linux", "jetbrains", "ide"]
