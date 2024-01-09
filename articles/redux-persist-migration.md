@@ -11,4 +11,3 @@ Redux Persistについては以下の記事がわかりやすいかと思いま�
 https://qiita.com/yasuhiro-yamada/items/bd86d7c9f35ebb1c1e7c
 
 この記事では、アプリをアップデートした際のストアの引き継ぎ方、あるいはストアのリセットについて解説します。
-a
