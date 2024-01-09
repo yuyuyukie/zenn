@@ -5,7 +5,9 @@ type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["wsl2", "linux", "jetbrains", "ide"]
 published: true
 ---
-# 症状e+bからcloneしたプロジェクトで作業をしようとしたところ、セーブしようとすると
+# 症状e
+WSL2環境でWebStorm(PhpStormなど他Jetbrains製IDEでしたら同じ症状が起きます)で発生。
+GitHubからcloneしたプロジェクトで作業をしようとしたところ、セーブしようとすると
 ```
 Unable to save settings : Failed to save settings . Please restart IntelliJ IDEA
 ```
