@@ -1,9 +1,9 @@
 ---
-title: "VeeValidateをV4へアップグレードする際のあれこれ"
+title: "VeeValidateをV4へアップグレード ～Fieldのカスタムコンポーネント～"
 emoji: "👋"
 type: "tech" # tech: 技術記事 / idea: アイデア
-topics: ["vue"]
-published: false
+topics: ["vue", "vee-validate", "nuxt.js"]
+published: true
 ---
 今回Nuxt2からNuxt3への移行作業に携わる機会がありました。VueのバリデーションライブラリであるVeeValidateも、移行に伴って大きく仕様変更がなされています。
 
@@ -200,8 +200,7 @@ v-slotも変更があります。`dirty`や`valid`といったフォームのメ
 <span v-show="!valid && validated">フォームを入力してください。</span>
 <span v-show="!valid && dirty">フォームを入力してください。</span>
 ```
-// TODO validatedの仕様を把握
-`dirty`は値が変更されると`true`になります。`validated
+`dirty`は値が変更されると`true`になります。申し込みが複数ページに渡るなど、フィールドに初期値がセットされる場合では`dirty`が`false`になるため、`validated`を見た方がいいです。
 
 ##### `fields`プロパティの代替
 V3での`fields`オブジェクトは[公式ドキュメント](https://vee-validate.logaretm.com/v3/api/validation-observer.html#scoped-slot-props)には存在しませんが、実際にはスコープドスロットとして各フィールドの情報を取得することができていました。
@@ -229,7 +228,7 @@ interface ObserverField {
 
 これはフォームの無効な項目をページ下部に一覧表示する際や、記入したフィールドの数に応じてシークバーを進めたりするのに便利でしたが、V4ではこれに値する機能はなくなってしまいました。
 
-今回は代替案として、ValidationProviderでField作成時にVuexストアにメタ情報を保存するような方策を取りました。詳細は[ValidationObserverのfieldsの代替](#validationobserverのfieldsの代替)に記載しています。
+今回は代替案として、ValidationProviderでField作成時にVuexストアにメタ情報を保存するような方策を取りました。詳細は後述します。
 #### ValidationObserverのref
 ValidationObserverのrefも上記の変更を受けていますので注意が必要です。
 
@@ -263,141 +262,30 @@ https://vee-validate.logaretm.com/v4/api/field/
 次のセクションでは上のドキュメントを拡張したカスタムコンポーネントを作成していきます。
 
 #### useFieldを用いたカスタムコンポーネント
-ドキュメントのコード例は`input`を内包したコンポーネントですが、既存コードを流用したいため、`<slot/>`に置き換えてみましょう。
-```vue
-// app.vue
-<script>
-const providerRef = ref<InstanceType<typeof ValidationProvider>>();
-const password = ref("");
-</script>
-<template>
-  <ValidationProvider 
-    ref="providerRef"
-    mode="eager"
-    v-model="password" 
-    v-slot="{ handlers }"
-    vid="password"
-    name="パスワード"
-  >
-    <input :value="password" v-on="handlers" />
-  </ValidationProvider>
-  <ValidationProvider 
-    ref="providerRef"
-    mode="eager"
-    v-model="password" 
-    v-slot="{ handlers }"
-    vid="password"
-    name="パスワード"
-  >
-    <input type="checkbox" :checked="password" v-on="handlers" />
-  </ValidationProvider>
-</template>
-```
-- `v-slot`で`handlers`を取り出して`<input/>`のイベントを購読しています。
+動作例やコードについてはCodeSandboxを用意しました。
+https://codesandbox.io/p/github/yuyuyukie/vee-validate-v4-sample/master?layout=%257B%2522sidebarPanel%2522%253A%2522EXPLORER%2522%252C%2522rootPanelGroup%2522%253A%257B%2522direction%2522%253A%2522horizontal%2522%252C%2522contentType%2522%253A%2522UNKNOWN%2522%252C%2522type%2522%253A%2522PANEL_GROUP%2522%252C%2522id%2522%253A%2522ROOT_LAYOUT%2522%252C%2522panels%2522%253A%255B%257B%2522type%2522%253A%2522PANEL_GROUP%2522%252C%2522contentType%2522%253A%2522UNKNOWN%2522%252C%2522direction%2522%253A%2522vertical%2522%252C%2522id%2522%253A%2522clr7tdria00063j818l2o1bir%2522%252C%2522sizes%2522%253A%255B70%252C30%255D%252C%2522panels%2522%253A%255B%257B%2522type%2522%253A%2522PANEL_GROUP%2522%252C%2522contentType%2522%253A%2522EDITOR%2522%252C%2522direction%2522%253A%2522horizontal%2522%252C%2522id%2522%253A%2522EDITOR%2522%252C%2522panels%2522%253A%255B%257B%2522type%2522%253A%2522PANEL%2522%252C%2522contentType%2522%253A%2522EDITOR%2522%252C%2522id%2522%253A%2522clr7tdria00023j8109rswxwn%2522%257D%255D%257D%252C%257B%2522type%2522%253A%2522PANEL_GROUP%2522%252C%2522contentType%2522%253A%2522SHELLS%2522%252C%2522direction%2522%253A%2522horizontal%2522%252C%2522id%2522%253A%2522SHELLS%2522%252C%2522panels%2522%253A%255B%257B%2522type%2522%253A%2522PANEL%2522%252C%2522contentType%2522%253A%2522SHELLS%2522%252C%2522id%2522%253A%2522clr7tdria00043j81php75fv4%2522%257D%255D%252C%2522sizes%2522%253A%255B100%255D%257D%255D%257D%252C%257B%2522type%2522%253A%2522PANEL_GROUP%2522%252C%2522contentType%2522%253A%2522DEVTOOLS%2522%252C%2522direction%2522%253A%2522vertical%2522%252C%2522id%2522%253A%2522DEVTOOLS%2522%252C%2522panels%2522%253A%255B%257B%2522type%2522%253A%2522PANEL%2522%252C%2522contentType%2522%253A%2522DEVTOOLS%2522%252C%2522id%2522%253A%2522clr7tdria00053j818ca856vz%2522%257D%255D%252C%2522sizes%2522%253A%255B100%255D%257D%255D%252C%2522sizes%2522%253A%255B50%252C50%255D%257D%252C%2522tabbedPanels%2522%253A%257B%2522clr7tdria00023j8109rswxwn%2522%253A%257B%2522id%2522%253A%2522clr7tdria00023j8109rswxwn%2522%252C%2522activeTabId%2522%253A%2522clr7tkdpy00t83j81zvncqzj5%2522%252C%2522tabs%2522%253A%255B%257B%2522id%2522%253A%2522clr7tdria00013j81dwy603dt%2522%252C%2522mode%2522%253A%2522permanent%2522%252C%2522type%2522%253A%2522FILE%2522%252C%2522filepath%2522%253A%2522%252FREADME.md%2522%257D%252C%257B%2522type%2522%253A%2522FILE%2522%252C%2522filepath%2522%253A%2522%252F.codesandbox%252Ftasks.json%2522%252C%2522id%2522%253A%2522clr7tkdpy00t83j81zvncqzj5%2522%252C%2522mode%2522%253A%2522permanent%2522%257D%255D%257D%252C%2522clr7tdria00053j818ca856vz%2522%253A%257B%2522id%2522%253A%2522clr7tdria00053j818ca856vz%2522%252C%2522activeTabId%2522%253A%2522clr7tk4j400qk3j81uplfw9ok%2522%252C%2522tabs%2522%253A%255B%257B%2522type%2522%253A%2522TASK_PORT%2522%252C%2522taskId%2522%253A%2522dev%2522%252C%2522port%2522%253A3000%252C%2522id%2522%253A%2522clr7tk4j400qk3j81uplfw9ok%2522%252C%2522mode%2522%253A%2522permanent%2522%252C%2522path%2522%253A%2522%252F%2522%257D%255D%257D%252C%2522clr7tdria00043j81php75fv4%2522%253A%257B%2522id%2522%253A%2522clr7tdria00043j81php75fv4%2522%252C%2522activeTabId%2522%253A%2522clr7tdtpz00573j81amrzj8un%2522%252C%2522tabs%2522%253A%255B%257B%2522id%2522%253A%2522clr7tdria00033j81vbi1n82m%2522%252C%2522mode%2522%253A%2522permanent%2522%252C%2522type%2522%253A%2522TERMINAL%2522%252C%2522shellId%2522%253A%2522clr7tdsm9000regh7c8jc9myw%2522%257D%252C%257B%2522type%2522%253A%2522TASK_LOG%2522%252C%2522taskId%2522%253A%2522dev%2522%252C%2522id%2522%253A%2522clr7tdtpz00573j81amrzj8un%2522%252C%2522mode%2522%253A%2522permanent%2522%257D%252C%257B%2522type%2522%253A%2522TASK_LOG%2522%252C%2522taskId%2522%253A%2522CSB_RUN_OUTSIDE_CONTAINER%253D1%2520devcontainer%2520templates%2520apply%2520--template-id%2520%255C%2522ghcr.io%252Fdevcontainers%252Ftemplates%252Ftypescript-node%255C%2522%2520--template-args%2520%27%257B%257D%27%2520--features%2520%27%255B%255D%27%2522%252C%2522id%2522%253A%2522clr7tevyo00883j81dvi3l6tm%2522%252C%2522mode%2522%253A%2522permanent%2522%257D%255D%257D%257D%252C%2522showDevtools%2522%253Atrue%252C%2522showShells%2522%253Atrue%252C%2522showSidebar%2522%253Atrue%252C%2522sidebarPanelSize%2522%253A15%257D
+
+以下は概要です。
+- ドキュメントのコード例は`input`を内包したカスタムフィールドですが、より汎用的に利用したいため、`<slot/>`に置き換えました。
+- `<ValidationProvider/>`の呼び出し元では`v-slot`で`handlers`を取り出して`<input/>`のイベントを購読しています。
   - `<Field/>`を使う場合と同様に値の変更は`<ValidationProvider/>`で行います。
   - `<input/>`に`v-model`で渡してしまうと、値を変更した際に二重で`password`が更新されてしまいます。`:value`を渡してください。
 - `vid`, `name`はV3との互換性を維持しています。
 - ValidationProviderのrefからは`useField()`の返り値を取得できるようにしています。
-```typescript
-// interactionModes.ts
-import { FieldContext } from 'vee-validate';
+- 各modeのバリデーションイベントのハンドリング処理は記事のものを一部変更して、blurイベントもバリデーションの対象にしています。
+- `<ValidationProvider/>`内の`useField`のオプションで`syncVModel: true`を指定することで、自動で変更をemitしてくれます。`defineEmits`も忘れずに。
+  - mode=`validateOnUpdate`は`<input/>`以外から値を変更する場合に必要になります。本来は`useField`の`validateOnValueUpdate: true`とするだけで動作するはずなのですが、動作しないのでwatchを追加しています。
+- ValidationProviderのref、v-slotからFieldの情報にアクセスできるようにするためにuseFieldの返り値をすべて`defineExpose()`, `<slot />`に渡しています。
+- ページの下部にバリデーションエラーの項目をまとめて表示するために`Pinia`でvalidかどうかや日本語名を保持するようにしています。これによって`<ValidationObserver/>`の`fields`の代替の役割を果たします。
 
-type InteractionEventGetter = (ctx: FieldContext) => string[];
-
-// Validates on submit only
-const passive: InteractionEventGetter = () => [];
-const lazy: InteractionEventGetter = () => ["change"];
-const aggressive: InteractionEventGetter = () => ["input", "blur"];
-const eager: InteractionEventGetter = (errorMessage) =>
-        errorMessage ? ["input"] : ["change", "blur"];
-
-export const modes = {
-  passive,
-  lazy,
-  aggressive,
-  eager,
-};
-```
-```vue
-// ValidationProvider.vue
-<script setup lang="ts">
-import { computed, toRef } from 'vue';
-import { useField } from 'vee-validate';
-import { modes } from '../interactionModes';
-
-const props = withDefaults(
-  defineProps<{
-    modelValue: string;
-    vid: string;
-    name: string;
-    mode?: Mode;
-    type?: InputType
-  }>(),
-  {
-    mode: 'aggressive',
-  }
-);
-
-const emit = defineEmits<{
-  (e: "update:modelValue", value: string): void
-}>();
-
-// use `toRef` to create reactive references to `name` prop which is passed to `useField`
-// this is important because vee-validte needs to know if the field name changes
-// https://vee-validate.logaretm.com/v4/guide/composition-api/caveats
-const { meta, value, errorMessage, handleChange, handleBlur } = useField(
-  toRef(props, 'vid'),
-  null,
-  {
-    label: props.name,
-    initialValue: props.modelValue,
-    type: props.type,
-    validateOnValueUpdate: props.mode === "validateOnUpdate" || props.type === "checkbox",
-    syncVModel: true,
-  }
-);
-
-// generates the listeners
-const handlers = computed(() => {
-  const on = {
-    blur: handleBlur,
-    // default input event to sync the value
-    // the `false` here prevents validation
-    input: [(e) => handleChange(e, false)],
-  };
-
-  // Get list of validation events based on the current mode
-  const triggers = modes[props.mode]({
-    errorMessage,
-    meta,
-  });
-
-  // add them to the "on" handlers object
-  triggers.forEach((t) => {
-    if (Array.isArray(on[t])) {
-      on[t].push(handleChange);
-    } else {
-      on[t] = handleChange;
-    }
-  });
-
-  return on;
-});
-</script>
-<template>
-  <slot
-    :handlers="handlers"
-  />
-</template>
-```
-
-- ValidationProviderでv-modelを定義し、ValidationProviderから上に値を更新する。
-  - このとき、useFieldのオプションで`syncVModel: true`を指定すると、自動でemitしてくれます。 
-
-#### ValidationObserverのfieldsの代替
 #### Cleave.jsとの併用
-今回のプロジェクトでは、ページの下部にバリデーションエラーの項目をまとめて表示する必要があり、そのためのカスタムコンポーネントがあります。
-#### interactionModeの再現
+Cleave.jsを使っている場合は、`<ValidationProvider/>`で値を変更するように変わっているため、結構手が込んだ対応が必要となります。
+
+ポイントとしては、
+- `<ValidationProvider/>`でCleave.jsのインスタンスを持ち、Cleave.jsの`onValueChange`を購読して生の値で更新・バリデーションします。
+- `<ValidationProvider/>`からv-slotでCleave.jsのインスタンス登録用の関数をエクスポートし、Cleave.jsインスタンスを呼び出します。
+
+また時間があればサンプルを更新したい・・・
 
 ## 引用・参考
 https://tech.andpad.co.jp/entry/2022/12/05/100000
